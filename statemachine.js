@@ -35,7 +35,7 @@ StateMachine.prototype.process = function(event, concurrency, callback) {
     }
 
     console.log('event', event);
-    this.jobs.process('statemachine:' + event, concurrency, function(job, done) {
+    this.queue.process('statemachine:' + event, concurrency, function(job, done) {
         job.data = self._formatJobData(job);
         callback(job, done);
     });
