@@ -1,6 +1,20 @@
+var kue = require('kue');
+
+// kue/reds open redis clients all over the place - and they do it in module
+// scope - so they're not reachable from outside.
+// By overriding the createClient function in kue (that is also used in reds) we
+// put all clients created in an array so that we can end them later.
+var _createClient = kue.redis.createClient.bind(kue.redis);
+var redisClients = [];
+kue.redis.createClient = function() {
+    var client = _createClient();
+    redisClients.push(client);
+    return client;
+}
+
 var test = require('tap').test;
 var createStatemachine = require('../statemachine');
-var redisClient = require('kue').redis.client();
+var redisClient = kue.redis.client();
 
 function reset(callback) {
     redisClient.keys('q:*', function(err, keys) {
@@ -38,4 +52,10 @@ test('a quick job should be finished properly', function(t) {
             data: {}
         }]).execute();
     });
+});
+
+test('shutdown', function(t) {
+    // end all open redisClients
+    redisClients.forEach(function(client) { client.end(); });
+    t.end();
 });
