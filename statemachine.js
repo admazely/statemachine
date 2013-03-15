@@ -111,19 +111,24 @@ StateMachine.prototype.query = function(queryObj, callback) {
 // usefull when restarting a process.
 // set to failed to that if a job makes a process crash it won't do that forever
 //
-StateMachine.prototype.failActiveJobs = function(event, callback) {
+StateMachine.prototype.failActiveJobs = function(events, callback) {
+    if (!Array.isArray(events)) {
+        throw new Error('events is not an array');
+    }
     var self = this;
 
-    var type = 'statemachine:' + event;
-    // 0 is first element, -1 is last element
-    kue.Job.rangeByType(type, 'active', 0, -1, 'asc', function(err, jobs) {
-        if (err) return callback(err);
+    async.forEach(events, function(event, done) {
+        var type = 'statemachine:' + event;
+        // 0 is first element, -1 is last element
+        kue.Job.rangeByType(type, 'active', 0, -1, 'asc', function(err, jobs) {
+            if (err) return done(err);
 
-        jobs.forEach(function(job) {
-            job.failed();
+            jobs.forEach(function(job) {
+                job.failed();
+            });
+            done(null);
         });
-        callback(null);
-    });
+    }, callback);
 }
 
 module.exports = StateMachine;
