@@ -16,6 +16,16 @@ var test = require('tap').test;
 var createStatemachine = require('../statemachine');
 var redisClient = kue.redis.client();
 
+var wrapIds = {};
+function wrap(str) {
+    if (wrapIds[str] === undefined) {
+        wrapIds[str] = 0;
+    }
+    var newStr = str + '-' + wrapIds[str];
+    wrapIds[str]++;
+    return newStr;
+}
+
 function setup(name, _callback) {
     test(name, function(t) {
         var callback = function(err) {
@@ -40,20 +50,43 @@ function setup(name, _callback) {
 
 setup('a quick job should be finished properly', function(t, statemachine) {
     t.plan(2);
-    statemachine.process('first', function(data, callback) {
+    var first = wrap('first');
+    var second = wrap('second');
+    statemachine.process(first, function(data, callback) {
         t.ok(true, 'first job should be processed');
         callback(null);
     });
-    statemachine.process('second', function(data, callback) {
+    statemachine.process(second, function(data, callback) {
         t.ok(true, 'second (last) job should be processed');
         t.end();
     });
 
     statemachine.createProcedure({}, [{
-        name: 'first',
+        name: first,
         data: {}
     }, {
-        name: 'second',
+        name: second,
+        data: {}
+    }]).execute();
+});
+
+setup('a failed job should be retried when attempts > 0', function(t, statemachine) {
+    var i = 0;
+    var first = wrap('first');
+    statemachine.process(first, function(data, callback) {
+        if (i === 0) {
+            i++;
+            callback(new Error('failure'));
+            return;
+        }
+        t.ok(true, 'should run event more than once');
+        t.end();
+    });
+
+    statemachine.createProcedure({
+        attempts: 2
+    }, [{
+        name: first,
         data: {}
     }]).execute();
 });
