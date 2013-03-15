@@ -106,5 +106,24 @@ StateMachine.prototype.query = function(queryObj, callback) {
         });
 }
 
+//
+// Take all jobs that have state active and set the state to failed instead
+// usefull when restarting a process.
+// set to failed to that if a job makes a process crash it won't do that forever
+//
+StateMachine.prototype.failActiveJobs = function(event, callback) {
+    var self = this;
+
+    var type = 'statemachine:' + event;
+    // 0 is first element, -1 is last element
+    kue.Job.rangeByType(type, 'active', 0, -1, 'asc', function(err, jobs) {
+        if (err) return callback(err);
+
+        jobs.forEach(function(job) {
+            job.failed();
+        });
+        callback(null);
+    });
+}
 
 module.exports = StateMachine;

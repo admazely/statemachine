@@ -91,6 +91,49 @@ setup('a failed job should be retried when attempts > 0', function(t, statemachi
     }]).execute();
 });
 
+setup('failActiveJobs should fail active jobs', function(t, statemachine) {
+    var first = wrap('first');
+    var second = wrap('second');
+    // start two jobs so that we can be sure that they don't infer with each
+    // other
+    statemachine.process(first, function(job1, callback1) {
+        statemachine.process(second, function(job2, callback2) {
+            statemachine.failActiveJobs(first, function(err) {
+                t.equal(err, null, 'should not error');
+                if (err) return t.end();
+
+                statemachine.queue.failed(function(err, ids) {
+                    t.equal(err, null, 'should not error');
+                    if (err) return t.end();
+
+                    t.equal(ids.length, 1, 'should return one failed id');
+                    t.equal(job1.id, ids[0], 'failed should have correct id');
+                    t.end();
+                });
+
+                statemachine.queue.active(function(err, ids) {
+                    t.equal(err, null, 'should not error');
+                    if (err) return t.end();
+
+                    t.equal(ids.length, 1, 'should return one active id');
+                    t.equal(job2.id, ids[0], 'active should have correct id');
+                });
+            });
+        });
+    });
+
+    // create two separate procedures so that both first and second will be
+    // processed at the same time above
+    statemachine.createProcedure({}, [{
+        name: first,
+        data: {}
+    }]).execute();
+    statemachine.createProcedure({}, [{
+        name: second,
+        data: {}
+    }]).execute();
+});
+
 test('shutdown', function(t) {
     // end all open redisClients
     redisClients.forEach(function(client) { client.end(); });
