@@ -205,6 +205,18 @@ setup('failActiveJobs should fail active jobs#2', function(t, statemachine) {
     }]).execute();
 });
 
+setup('execute() should not delete any attributes', function(t, statemachine) {
+    var foo = wrap('foo');
+    var procedure = statemachine.createProcedure({}, [{
+        name: foo,
+        data: {}
+    }]);
+    t.deepEqual(procedure.steps.length, 1, 'defaults should not be overridden');
+    procedure.execute();
+    t.deepEqual(procedure.steps.length, 1, 'defaults should not be overridden');
+    t.end();
+});
+
 test('shutdown', function(t) {
     // end all open redisClients
     redisClients.forEach(function(client) { client.end(); });
