@@ -93,9 +93,6 @@ StateMachine.prototype.query = function(queryObj, callback) {
                                 return job;
                             })
                             .filter(function(job) {
-                                // note: It would be nice if kue had a way to get this
-                                // info without looking at an internal variable 
-
                                 return helpers.subset(job.data, queryObj);
                             });
 

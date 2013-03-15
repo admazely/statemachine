@@ -73,7 +73,7 @@ setup('a quick job should be finished properly', function(t, statemachine) {
 setup('a failed job should be retried when attempts > 0', function(t, statemachine) {
     var i = 0;
     var first = wrap('first');
-    statemachine.process(first, function(data, callback) {
+    statemachine.process(first, function(job, callback) {
         if (i === 0) {
             i++;
             callback(new Error('failure'));
