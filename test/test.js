@@ -94,13 +94,13 @@ setup('a failed job should be retried when attempts > 0', function(t, statemachi
 setup('failActiveJobs should fail active jobs#1', function(t, statemachine) {
     t.plan(7);
 
-    var first = wrap('first');
-    var second = wrap('second');
+    var foo = wrap('foo');
+    var bar = wrap('bar');
     // start two jobs so that we can be sure that they don't infer with each
     // other
-    statemachine.process(first, function(job1, callback1) {
-        statemachine.process(second, function(job2, callback2) {
-            statemachine.failActiveJobs([first], function(err) {
+    statemachine.process(foo, function(job1, callback1) {
+        statemachine.process(bar, function(job2, callback2) {
+            statemachine.failActiveJobs([foo], function(err) {
                 t.equal(err, null, 'should not error');
                 if (err) return t.end();
 
@@ -123,27 +123,27 @@ setup('failActiveJobs should fail active jobs#1', function(t, statemachine) {
         });
     });
 
-    // create two separate procedures so that both first and second will be
+    // create two separate procedures so that both foo and bar will be
     // processed at the same time above
     statemachine.createProcedure({}, [{
-        name: first,
+        name: foo,
         data: {}
     }]).execute();
     statemachine.createProcedure({}, [{
-        name: second,
+        name: bar,
         data: {}
     }]).execute();
 });
 
 setup('failActiveJobs should fail active jobs#2', function(t, statemachine) {
     t.plan(7);
-    var first = wrap('first');
-    var second = wrap('second');
+    var foo = wrap('foo');
+    var bar = wrap('bar');
     // start two jobs so that we can be sure that they don't infer with each
     // other
-    statemachine.process(first, function(job1, callback1) {
-        statemachine.process(second, function(job2, callback2) {
-            statemachine.failActiveJobs([first, second], function(err) {
+    statemachine.process(foo, function(job1, callback1) {
+        statemachine.process(bar, function(job2, callback2) {
+            statemachine.failActiveJobs([foo, bar], function(err) {
                 t.equal(err, null, 'should not error');
                 if (err) return t.end();
 
@@ -166,14 +166,14 @@ setup('failActiveJobs should fail active jobs#2', function(t, statemachine) {
         });
     });
 
-    // create two separate procedures so that both first and second will be
+    // create two separate procedures so that both foo and bar will be
     // processed at the same time above
     statemachine.createProcedure({}, [{
-        name: first,
+        name: foo,
         data: {}
     }]).execute();
     statemachine.createProcedure({}, [{
-        name: second,
+        name: bar,
         data: {}
     }]).execute();
 });
