@@ -106,16 +106,5 @@ StateMachine.prototype.query = function(queryObj, callback) {
         });
 }
 
-// Probably don't include this
-StateMachine.prototype.resumeProcedures = function(queryObj, callback) {
-    this.query(queryObj, function(err, jobs) {
-        var procedures = {};
-        jobs.forEach(function(job) {
-            var id = job.rawData.id;
-            procedures[id] = procedures[id] || [];
-            procedures.push(job);
-        });
-    });
-}
 
 module.exports = StateMachine;
