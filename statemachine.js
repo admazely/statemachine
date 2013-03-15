@@ -18,11 +18,14 @@ function StateMachine() {
     this.search = reds.createSearch('q:search');
 }
 
-StateMachine.prototype.createProcedure = function(defaults, steps) {
+StateMachine.prototype.createProcedure = function(defaults, steps, id) {
     return new Procedure({
         defaults: defaults,
         queue: this.queue,
-        steps: steps
+        steps: steps,
+        // random and unique id for this procedure - used to resume already
+        // started jobs, among other things
+        id: id || helpers.randomStr()
     });
 }
 
@@ -35,8 +38,18 @@ StateMachine.prototype.process = function(event, concurrency, callback) {
     }
 
     this.queue.process('statemachine:' + event, concurrency, function(job, done) {
+        var data = job.data;
         job.data = self._formatJobData(job);
-        callback(job, done);
+        callback(job, function(err) {
+
+            if (err) return done(err);
+
+            if (data.steps.length === 0) return done(null);
+
+            self.createProcedure(
+                data.defaults, data.steps, data.id
+            ).execute(done);
+        });
     });
 }
 
@@ -75,13 +88,13 @@ StateMachine.prototype.query = function(queryObj, callback) {
 
                         jobs = jobs
                             .map(function(job) {
+                                job.rawData = job.data;
                                 job.data = self._formatJobData(job);
                                 return job;
                             })
                             .filter(function(job) {
                                 // note: It would be nice if kue had a way to get this
                                 // info without looking at an internal variable 
-                                if (job._state === 'complete') return false;
 
                                 return helpers.subset(job.data, queryObj);
                             });
@@ -91,6 +104,18 @@ StateMachine.prototype.query = function(queryObj, callback) {
                 }
             );
         });
+}
+
+// Probably don't include this
+StateMachine.prototype.resumeProcedures = function(queryObj, callback) {
+    this.query(queryObj, function(err, jobs) {
+        var procedures = {};
+        jobs.forEach(function(job) {
+            var id = job.rawData.id;
+            procedures[id] = procedures[id] || [];
+            procedures.push(job);
+        });
+    });
 }
 
 module.exports = StateMachine;
