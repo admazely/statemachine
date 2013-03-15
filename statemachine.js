@@ -38,23 +38,20 @@ StateMachine.prototype.process = function(event, concurrency, callback) {
     }
 
     this.queue.process('statemachine:' + event, concurrency, function(job, done) {
-        var data = job.data;
-        job.data = self._formatJobData(job);
+        self._formatJobData(job);
         callback(job, function(err) {
 
             if (err) return done(err);
 
-            if (data.steps.length === 0) return done(null);
-
-            self.createProcedure(
-                data.defaults, data.steps, data.id
-            ).execute(done);
+            self.completeJob(job, done);
         });
     });
 }
 
+// TODO: Abstract away this into a lib/job.js-file
 StateMachine.prototype._formatJobData = function(job) {
-    return helpers.mergeObjs(
+    job.rawData = job.data;
+    job.data = helpers.mergeObjs(
         {
             stepName: job.data.stepName
         },
@@ -88,8 +85,7 @@ StateMachine.prototype.query = function(queryObj, callback) {
 
                         jobs = jobs
                             .map(function(job) {
-                                job.rawData = job.data;
-                                job.data = self._formatJobData(job);
+                                self._formatJobData(job);
                                 return job;
                             })
                             .filter(function(job) {
@@ -126,6 +122,24 @@ StateMachine.prototype.failActiveJobs = function(events, callback) {
             done(null);
         });
     }, callback);
+}
+
+// TODO: Abstract this to a lib/job.js-file
+StateMachine.prototype.completeJob = function(job, callback) {
+    callback = callback || function(err) {
+        if (err) throw err;
+    }
+
+    var data = job.rawData
+    if (data.steps.length === 0) return callback(nll);
+
+    this.createProcedure(
+        data.defaults, data.steps, data.id
+    ).execute(function(err, done) {
+        if (err) return callback(err);
+        job.complete();
+        callback(null);
+    });
 }
 
 module.exports = StateMachine;

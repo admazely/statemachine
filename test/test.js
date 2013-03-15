@@ -48,7 +48,7 @@ function setup(name, _callback) {
     });
 }
 
-setup('a quick job should be finished properly', function(t, statemachine) {
+setup('a quick job should finish by using the callback', function(t, statemachine) {
     t.plan(2);
     var first = wrap('first');
     var second = wrap('second');
@@ -59,6 +59,33 @@ setup('a quick job should be finished properly', function(t, statemachine) {
     statemachine.process(second, function(data, callback) {
         t.ok(true, 'second (last) job should be processed');
         t.end();
+    });
+
+    statemachine.createProcedure({}, [{
+        name: first,
+        data: {}
+    }, {
+        name: second,
+        data: {}
+    }]).execute();
+});
+
+setup('a quick job should finish by calling statemachine.completeJob', function(t, statemachine) {
+    t.plan(5);
+    var first = wrap('second');
+    var second = wrap('second');
+    statemachine.process(first, function(job, callback) {
+        t.ok(true, 'first job should be processed');
+        statemachine.completeJob(job, function(err) {
+            t.equal(err, null, 'should not error');
+            kue.Job.get(job.id, function(err, job) {
+                t.equal(err, null, 'should not error');
+                t.equal(job._state, 'complete');
+            });
+        });
+    });
+    statemachine.process(second, function(job, callback) {
+        t.ok(true, 'second (last) job should be processed');
     });
 
     statemachine.createProcedure({}, [{
