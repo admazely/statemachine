@@ -133,12 +133,18 @@ StateMachine.prototype.completeJob = function(job, callback) {
     var data = job.rawData
     if (data.steps.length === 0) return callback(nll);
 
+    // TODO: setting createdNextProcedure as a variable in the job is sort of
+    // stupid - but it works and, more importanly, we get a callback we can rely
+    // on - that is not the case when you call job.complete.
+    if (job.get('createdNextProcedure') === true) return callback(null);
+
     this.createProcedure(
         data.defaults, data.steps, data.id
     ).execute(function(err, done) {
         if (err) return callback(err);
         job.complete();
-        callback(null);
+        job.set('createdNextProcedure', true);
+        job.update(callback);
     });
 }
 
