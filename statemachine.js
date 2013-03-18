@@ -100,15 +100,27 @@ StateMachine.prototype.query = function(queryObj, callback) {
 }
 
 //
-// Take all jobs that have state active and set the state to failed instead
-// usefull when restarting a process.
-// set to failed to that if a job makes a process crash it won't do that forever
+// reset the active jobs - this should typically be called on initialization.
+// The job will first be set to failed, but if there's attempts left then we
+// set the state to inactive, so that it can be processed later
 //
-StateMachine.prototype.failActiveJobs = function(events, callback) {
+StateMachine.prototype.resetActiveJobs = function(events, callback) {
     if (!Array.isArray(events)) {
         throw new Error('events is not an array');
     }
     var self = this;
+
+    function resetJob(job, done) {
+        job.failed();
+        // TODO: Write tests for this part
+        job.attempt(function(err, remaining, attempts, max){
+            if (err) return done(err);
+            if (remaining) {
+                job.inactive();
+            }
+            job.update(done);
+        });
+    }
 
     async.forEach(events, function(event, done) {
         var type = 'statemachine:' + event;
@@ -116,10 +128,7 @@ StateMachine.prototype.failActiveJobs = function(events, callback) {
         kue.Job.rangeByType(type, 'active', 0, -1, 'asc', function(err, jobs) {
             if (err) return done(err);
 
-            jobs.forEach(function(job) {
-                job.failed();
-            });
-            done(null);
+            async.forEach(jobs, resetJob, done);
         });
     }, callback);
 }

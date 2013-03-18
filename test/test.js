@@ -118,7 +118,7 @@ setup('a failed job should be retried when attempts > 0', function(t, statemachi
     }]).execute();
 });
 
-setup('failActiveJobs should fail active jobs#1', function(t, statemachine) {
+setup('resetActiveJobs should fail active jobs#1', function(t, statemachine) {
     t.plan(7);
 
     var foo = wrap('foo');
@@ -127,7 +127,7 @@ setup('failActiveJobs should fail active jobs#1', function(t, statemachine) {
     // other
     statemachine.process(foo, function(job1, callback1) {
         statemachine.process(bar, function(job2, callback2) {
-            statemachine.failActiveJobs([foo], function(err) {
+            statemachine.resetActiveJobs([foo], function(err) {
                 t.equal(err, null, 'should not error');
                 if (err) return t.end();
 
@@ -162,7 +162,7 @@ setup('failActiveJobs should fail active jobs#1', function(t, statemachine) {
     }]).execute();
 });
 
-setup('failActiveJobs should fail active jobs#2', function(t, statemachine) {
+setup('resetActiveJobs should fail active jobs#2', function(t, statemachine) {
     t.plan(7);
     var foo = wrap('foo');
     var bar = wrap('bar');
@@ -170,7 +170,7 @@ setup('failActiveJobs should fail active jobs#2', function(t, statemachine) {
     // other
     statemachine.process(foo, function(job1, callback1) {
         statemachine.process(bar, function(job2, callback2) {
-            statemachine.failActiveJobs([foo, bar], function(err) {
+            statemachine.resetActiveJobs([foo, bar], function(err) {
                 t.equal(err, null, 'should not error');
                 if (err) return t.end();
 
