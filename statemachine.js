@@ -140,7 +140,7 @@ StateMachine.prototype.completeJob = function(job, callback) {
     }
 
     var data = job.rawData
-    if (data.steps.length === 0) return callback(nll);
+    if (data.steps.length === 0) return callback(null);
 
     // TODO: setting createdNextProcedure as a variable in the job is sort of
     // stupid - but it works and, more importanly, we get a callback we can rely
