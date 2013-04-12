@@ -140,6 +140,7 @@ StateMachine.prototype.completeJob = function(job, callback) {
     }
 
     var data = job.rawData
+    job.data = job.rawData; //restore original data object
     if (data.steps.length === 0) return callback(null);
 
     // TODO: setting createdNextProcedure as a variable in the job is sort of
