@@ -158,4 +158,23 @@ StateMachine.prototype.completeJob = function(job, callback) {
     });
 }
 
+// Complete a job based on its ID
+StateMachine.prototype.completeJobById = function(jobId, callback) {
+    var self = this;
+    callback = callback || function(err) {
+        if(err) throw err;
+    }
+
+    kue.Job.get(jobId, function(err, job){
+        if(err) callback(err);
+
+        // Make sure we dont complete a job twice
+        if(job._state === 'complete') return callback(null);
+
+        // Comply with what is expected by completeJob
+        self._formatJobData(job);
+        self.completeJob(job, callback);
+    });
+}
+
 module.exports = StateMachine;
