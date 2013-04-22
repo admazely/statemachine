@@ -9,8 +9,13 @@ reds.createClient = kue.redis.createClient;
 var helpers = require('./lib/helpers');
 var Procedure = require('./lib/procedure');
 
-function StateMachine() {
-    if (!(this instanceof StateMachine)) return new StateMachine();
+function StateMachine(opts) {
+    if (!(this instanceof StateMachine)) return new StateMachine(opts);
+
+    //configure which redis connection should be used.
+    if (opts.createClient)
+        kue.redis.createClient = opts.createClient
+
     this.queue = kue.createQueue();
 
     // q:search is the reds-namespace created by kue, so the queue are
