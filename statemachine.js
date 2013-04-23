@@ -3,8 +3,6 @@ var async = require('async');
 var kue = require('kue');
 
 var reds = require('reds');
-// use the same createClient function as kue
-reds.createClient = kue.redis.createClient;
 
 var helpers = require('./lib/helpers');
 var Procedure = require('./lib/procedure');
@@ -15,6 +13,9 @@ function StateMachine(opts) {
     //configure which redis connection should be used.
     if (opts.createClient)
         kue.redis.createClient = opts.createClient
+
+    // use the same createClient function as kue
+    reds.createClient = kue.redis.createClient;
 
     this.queue = kue.createQueue();
 
